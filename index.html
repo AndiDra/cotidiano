@@ -162,6 +162,27 @@ details.compose{background:var(--surface);border:1px solid var(--line);border-ra
 .sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:28px 0 10px}
 .sectionhead h2{margin:0}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+@media (max-width:480px){.tile{min-height:100px!important}}
+.topright{display:flex;align-items:center;gap:2px}
+.gear svg{width:20px;height:20px}
+.row-hint.late{color:var(--danger)}
+.quickadd{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:14px}
+details.alldone{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 14px}
+details.alldone summary{color:var(--ok)}
+details.alldone[open] .list{margin:6px -14px -6px;border-width:1px 0 0;border-radius:0 0 16px 16px}
+.reviewcard{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:10px;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.reviewcard>span:first-child{display:flex;flex-direction:column}
+.reviewcard small{color:var(--muted);font-size:.8125rem}
+.reviewcard.ok small{color:var(--ok)}
+.chev{font-size:1.4rem;color:var(--muted)}
+ul.rv{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:16px}
+ul.rv li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+ul.rv li:last-child{border-bottom:0}
+.sw-dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.rv-val{font-size:.875rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rv-val.met{color:var(--ok);font-weight:600}
+.rv-proj{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:14px;padding:14px 16px;margin-top:10px}
+.cal-task{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:14px;height:3px;border-radius:2px;background:var(--accent)}
 @media (min-width:560px){.tiles{grid-template-columns:repeat(3,1fr)}}
 .tile{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:14px;min-height:118px;border-radius:18px;border:1px solid var(--line);background:var(--surface);background:color-mix(in srgb,var(--c) 15%,var(--surface));color:var(--ink);font:inherit;cursor:pointer}
 .tile-ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--c);color:#fff;margin-bottom:auto}
@@ -206,7 +227,7 @@ dialog h2{margin-top:0}
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar" id="topbar"><div id="topLeft"></div><span class="sync" id="syncStatus"></span></div>
+  <div class="topbar" id="topbar"><div id="topLeft"></div><div class="topright"><span class="sync" id="syncStatus"></span><button class="icon-btn subtle gear" data-act="go" data-v="ajustes" aria-label="Ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button></div></div>
   <main id="view"></main>
 </div>
 
@@ -242,7 +263,7 @@ function rangeText(a,b){const A=parseYmd(a),B=parseYmd(b);return A.getMonth()===
 function deadlineText(d){const left=diffDays(d,todayStr());if(left<0)return `Venció hace ${plural(-left,'día')}`;if(left===0)return 'Vence hoy';return `Faltan ${plural(left,'día')}`;}
 
 /* ========= Estado ========= */
-function emptyState(){return{v:1,updatedAt:0,items:[],logs:{},projects:[],journal:[]};}
+function emptyState(){return{v:1,updatedAt:0,items:[],logs:{},projects:[],journal:[],tasks:[],reviews:{}};}
 function seedState(){const s=emptyState();s.items=[
   {id:'i1',name:'Ir al gym',emoji:'🏋️',cat:'habito',freq:'semana',n:3,moment:'',color:PALETTE[3],archived:false},
   {id:'i2',name:'Leer un rato',emoji:'📖',cat:'habito',freq:'diario',n:1,moment:'noche',color:PALETTE[4],archived:false},
@@ -286,13 +307,15 @@ const progressOf=p=>p.milestones.length?Math.round(p.milestones.filter(m=>m.done
 const hoursIn=(p,mon)=>p.hours.filter(x=>mondayOf(x.date)===mon).reduce((a,x)=>a+x.h,0);
 
 /* ========= Navegación ========= */
-const VIEWS=['inicio','habitos','hogar','proyectos','calendario','bitacora','ajustes'];
+const VIEWS=['inicio','habitos','hogar','tareas','proyectos','calendario','bitacora','revision','ajustes'];
+let revWeek=null;
 let view='inicio', viewDate=todayStr(), weekStart=mondayOf(todayStr()), openProject=null, jFilter='todas', lastToday=todayStr();
 let calMonth=todayStr().slice(0,8)+'01', calSel=todayStr();
 function go(h){if(location.hash.slice(1)===h)route();else location.hash=h;}
 function route(){const [v,id]=decodeURIComponent(location.hash.slice(1)).split('/');view=VIEWS.includes(v)?v:'inicio';openProject=view==='proyectos'&&id?id:null;render();scrollTo(0,0);}
 
 const ICONS={
+  tareas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5M3.5 18l1.5 1.5 2.5-2.5"/></svg>',
   habitos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V11"/><path d="M12 11C12 7 9 4 4 4c0 5 3 7 8 7z"/><path d="M12 13c0-3 2.5-6 8-6 0 4-3 6-8 6z"/></svg>',
   hogar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
   proyectos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
@@ -302,7 +325,7 @@ const ICONS={
 };
 
 function render(){
-  const views={inicio:viewInicio,habitos:()=>viewCategoria('habito'),hogar:()=>viewCategoria('hogar'),proyectos:viewProyectos,calendario:viewCalendario,bitacora:viewBitacora,ajustes:viewAjustes};
+  const views={inicio:viewInicio,habitos:()=>viewCategoria('habito'),hogar:()=>viewCategoria('hogar'),tareas:viewTareas,proyectos:viewProyectos,calendario:viewCalendario,bitacora:viewBitacora,revision:viewRevision,ajustes:viewAjustes};
   $('#view').innerHTML=views[view]();
   $('#topLeft').innerHTML=view==='inicio'?'<button class="brand" data-act="go" data-v="">Cotidiano</button>':view==='proyectos'&&openProject?backBtn('proyectos','Proyectos'):backBtn();
   paintSync();
@@ -336,6 +359,65 @@ function projCard(p){
   </button>`;
 }
 
+/* ----- Tareas puntuales ----- */
+function taskHint(t,T){
+  if(t.done)return t.doneAt?`Hecha el ${fmtDay(t.doneAt)}`:'Hecha';
+  if(!t.date)return 'Sin fecha';
+  const left=diffDays(t.date,T);
+  if(left<0)return `Vencida hace ${plural(-left,'día')}`;
+  if(left===0)return 'Para hoy';
+  if(left===1)return 'Para mañana';
+  return left<7?`Para el ${weekdayName(t.date).toLowerCase()} ${parseYmd(t.date).getDate()}`:`Para el ${fmtDay(t.date)}`;
+}
+function rowTask(t){
+  const T=todayStr(),late=!t.done&&t.date&&t.date<T;
+  return `<div class="row${t.done?' done':''}" style="--c:#5FA8D3">
+    <button class="check" data-act="task-toggle" data-id="${t.id}" aria-pressed="${t.done}" aria-label="${esc(t.text)}"></button>
+    <div class="row-main" data-act="task-edit" data-id="${t.id}"><span class="row-name">${esc(t.text)}</span><span class="row-hint${late?' late':''}">${esc(taskHint(t,T))}</span></div>
+    <span></span></div>`;
+}
+function viewTareas(){
+  const T=todayStr(),open=state.tasks.filter(t=>!t.done);
+  const by=(a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.createdAt.localeCompare(b.createdAt);
+  const late=open.filter(t=>t.date&&t.date<T).sort(by),today=open.filter(t=>t.date===T),next=open.filter(t=>t.date>T).sort(by),nodate=open.filter(t=>!t.date);
+  const done=state.tasks.filter(t=>t.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
+  let h=pageHead('Tareas',open.length?plural(open.length,'pendiente'):'Nada pendiente');
+  h+=`<div class="quickadd"><input id="tNew" placeholder="Nueva tarea, ej: llamar al plomero" enterkeyhint="done" autocomplete="off">
+    <div class="inline" style="margin-top:8px"><input id="tDate" type="date" aria-label="Fecha (opcional)"><button class="btn primary" data-act="task-add">Agregar</button></div>
+    <p class="hint">La fecha es opcional. Las tareas con fecha aparecen en el inicio ese día.</p></div>`;
+  const grp=(title,arr)=>arr.length?`<h2>${title}</h2><div class="list">${arr.map(rowTask).join('')}</div>`:'';
+  h+=grp('Vencidas',late)+grp('Hoy',today)+grp('Próximas',next)+grp('Sin fecha',nodate);
+  if(!state.tasks.length)h+=`<p class="lede">Acá van las cosas que se hacen una sola vez: un trámite, una compra, una llamada. Al marcarlas pasan a "Hechas".</p>`;
+  if(done.length)h+=`<details class="past"><summary>Hechas (${done.length})</summary><div class="list">${done.slice(0,30).map(rowTask).join('')}</div><button class="btn small ghost danger-btn" data-act="task-clear" style="margin-top:8px">Borrar las hechas</button></details>`;
+  return h;
+}
+function addTask(){const inp=$('#tNew'),text=inp.value.trim();if(!text){inp.focus();return;}
+  state.tasks.push({id:uid(),text,date:$('#tDate').value||'',done:false,doneAt:'',createdAt:new Date().toISOString()});save();render();$('#tNew').focus();}
+function toggleTask(id){const t=state.tasks.find(x=>x.id===id);t.done=!t.done;t.doneAt=t.done?todayStr():'';save();}
+function openTaskDialog(id){
+  const t=state.tasks.find(x=>x.id===id);
+  openDialog(`<div class="form"><h2>Editar tarea</h2>
+    <label class="field"><span>Tarea</span><input id="tEdText" value="${esc(t.text)}"></label>
+    <label class="field"><span>Fecha (opcional)</span><input id="tEdDate" type="date" value="${esc(t.date)}"></label>
+    <div class="dlg-actions"><button type="button" class="btn ghost left danger-btn" id="tEdDel">Eliminar</button><button type="button" class="btn" data-close>Cancelar</button><button type="button" class="btn primary" id="tEdSave">Guardar</button></div></div>`,b=>{
+    b.querySelector('#tEdSave').onclick=()=>{const v=b.querySelector('#tEdText').value.trim();if(!v)return;t.text=v;t.date=b.querySelector('#tEdDate').value||'';save();closeDialog();render();};
+    b.querySelector('#tEdDel').onclick=()=>{state.tasks=state.tasks.filter(x=>x.id!==id);save();closeDialog();render();};
+  });
+}
+
+/* ----- Pendientes de hoy (inicio) ----- */
+function todayBlock(T){
+  const ord={'mañana':0,'tarde':1,'noche':2,'':3};
+  const items=active().map(it=>({it,st:itemStatus(it,T)})).filter(r=>r.st.due).sort((a,b)=>ord[a.it.moment]-ord[b.it.moment]);
+  const tasks=state.tasks.filter(t=>t.date&&t.date<=T&&(!t.done||t.doneAt===T)).sort((a,b)=>a.date.localeCompare(b.date));
+  const pend=items.filter(r=>!r.st.done).length+tasks.filter(t=>!t.done).length;
+  const doneN=items.filter(r=>r.st.done).length+tasks.filter(t=>t.done).length;
+  if(!items.length&&!tasks.length)return `<div class="sectionhead"><h2>Hoy</h2></div><p class="lede" style="margin-top:0">Nada programado para hoy.</p>`;
+  const list=`<div class="list">${items.map(r=>rowHtml(r,T)).join('')}${tasks.map(rowTask).join('')}</div>`;
+  if(!pend)return `<div class="sectionhead"><h2>Hoy</h2></div><details class="alldone"><summary>Todo al día: ${plural(doneN,'cosa hecha','cosas hechas')}</summary>${list}</details>`;
+  return `<div class="sectionhead"><h2>Pendientes de hoy</h2><span class="sub" style="margin:0">${doneN} de ${pend+doneN} hechas</span></div>${list}`;
+}
+
 /* ----- Inicio ----- */
 function viewInicio(){
   const T=todayStr(),items=active();
@@ -343,24 +425,64 @@ function viewInicio(){
   const hab=cat('habito'),hog=cat('hogar');
   const actP=state.projects.filter(p=>p.status==='activo');
   const pendJ=state.journal.filter(j=>j.status!=='aplicado').length;
+  const openT=state.tasks.filter(t=>!t.done),lateT=openT.filter(t=>t.date&&t.date<T).length;
   const monthKey=T.slice(0,7),monthLogs=Object.keys(state.logs).filter(d=>d.startsWith(monthKey)).reduce((a,d)=>a+Object.keys(state.logs[d]).length,0);
   const lineFor=(s,pendTxt)=>!s.n?'Sin cargar todavía':s.pend?pendTxt(s.pend):`Al día${s.done?`, ${s.done} hechas hoy`:''}`;
   const tiles=[
     ['habitos','Hábitos',lineFor(hab,n=>`${plural(n,'pendiente')} hoy`),'#3E9C99'],
     ['hogar','Tareas del hogar',lineFor(hog,n=>`${plural(n,'tarea')} para hoy`),'#E3A23B'],
+    ['tareas','Tareas',openT.length?`${plural(openT.length,'pendiente')}${lateT?`, ${lateT} ${lateT===1?'vencida':'vencidas'}`:''}`:'Nada pendiente','#5FA8D3'],
     ['proyectos','Proyectos',actP.length?plural(actP.length,'en curso','en curso'):'Sin proyectos','#7D8FD6'],
     ['calendario','Calendario',monthLogs?`${plural(monthLogs,'registro')} este mes`:MONTHS[parseYmd(T).getMonth()].replace(/^./,c=>c.toUpperCase()),'#E58A8A'],
-    ['bitacora','Bitácora',pendJ?`${plural(pendJ,'ajuste')} sin aplicar`:'Al día','#8DB38B'],
-    ['ajustes','Ajustes',syncCfg()?'Sincronizado con GitHub':'Datos en este dispositivo','#8A9AA5']];
+    ['bitacora','Bitácora',pendJ?`${plural(pendJ,'ajuste')} sin aplicar`:'Al día','#8DB38B']];
   const mon=mondayOf(T),days=[...Array(7)].map((_,i)=>addDays(mon,i));
   let h=`<header class="homehead"><h1>${weekdayName(T)}</h1><p class="sub">${fmtDay(T)}</p></header>
-  <nav class="tiles" aria-label="Secciones">${tiles.map(([v,t,s,c])=>`<button class="tile" data-act="go" data-v="${v}" style="--c:${c}"><span class="tile-ic">${ICONS[v]}</span><span class="tile-t">${t}</span><span class="tile-s">${esc(s)}</span></button>`).join('')}</nav>
-  <div class="sectionhead"><h2>Esta semana</h2><span class="sub" style="margin:0">${rangeText(days[0],days[6])}</span></div>
+  <nav class="tiles" aria-label="Secciones">${tiles.map(([v,t,s,c])=>`<button class="tile" data-act="go" data-v="${v}" style="--c:${c}"><span class="tile-ic">${ICONS[v]}</span><span class="tile-t">${t}</span><span class="tile-s">${esc(s)}</span></button>`).join('')}</nav>`;
+  h+=todayBlock(T);
+  h+=`<div class="sectionhead"><h2>Esta semana</h2><span class="sub" style="margin:0">${rangeText(days[0],days[6])}</span></div>
   <div class="strip">${days.map((d,i)=>{const its=dotsFor(d);return `<button class="sd${d===T?' today':''}" data-act="cal-day" data-date="${d}" aria-label="${WD[i]} ${parseYmd(d).getDate()}, ${plural(its.length,'registro')}"><small>${WD[i]}</small><b>${parseYmd(d).getDate()}</b><span class="mini">${its.slice(0,6).map(it=>`<i style="--c:${it.color}"></i>`).join('')}</span></button>`;}).join('')}</div>`;
+  const wd=(parseYmd(T).getDay()+6)%7,rk=weekKey(wd===0?addDays(mon,-7):mon),rv=state.reviews[rk];
+  h+=`<button class="reviewcard${rv&&rv.done?' ok':''}" data-act="go" data-v="revision"><span><b>Revisión semanal</b><small>${rv&&rv.done?'Hecha':(wd>=4||wd===0)?'Buen momento para hacerla':'Se hace al cerrar la semana'}</small></span><span class="chev" aria-hidden="true">›</span></button>`;
   const dls=state.projects.filter(p=>p.deadline&&p.status!=='terminado'&&p.deadline>=mon&&p.deadline<=days[6]);
   if(dls.length)h+=`<p class="lede">Vencen esta semana: ${dls.map(p=>`${esc(p.name||'Sin nombre')} (${WD[(parseYmd(p.deadline).getDay()+6)%7]} ${parseYmd(p.deadline).getDate()})`).join(', ')}.</p>`;
   h+=`<div class="sectionhead"><h2>Proyectos en curso</h2><button class="btn small ghost" data-act="go" data-v="proyectos">Ver todos</button></div>`;
   h+=actP.length?actP.map(projCard).join(''):`<div class="empty"><p>No hay proyectos en curso.</p><button class="btn primary" data-act="proj-new">Crear proyecto</button></div>`;
+  return h;
+}
+
+/* ----- Revisión semanal ----- */
+function viewRevision(){
+  const T=todayStr();
+  if(!revWeek){const m=mondayOf(T);revWeek=parseYmd(T).getDay()===1?addDays(m,-7):m;}
+  const mon=revWeek,sun=addDays(mon,6),wk=weekKey(mon),nwk=weekKey(addDays(mon,7)),days=[...Array(7)].map((_,i)=>addDays(mon,i));
+  const r=state.reviews[wk]||{};
+  const nav=`<div class="nav"><button class="icon-btn" data-act="rev-week" data-n="-1" aria-label="Semana anterior">‹</button><button class="icon-btn" data-act="rev-week" data-n="1" aria-label="Semana siguiente">›</button></div>`;
+  let h=pageHead('Revisión semanal',`Semana del ${rangeText(mon,sun)}`,nav);
+
+  const items=active();
+  const goal=it=>it.freq==='diario'?7:it.freq==='semana'?it.n:it.freq==='cada'&&it.n<=7?Math.floor(7/it.n):0;
+  let withGoal=0,met=0;
+  const rows=items.map(it=>{const c=days.filter(d=>isDone(it.id,d)).length,g=goal(it),ok=g&&c>=g;if(g){withGoal++;if(ok)met++;}
+    return `<li><span class="sw-dot" style="--c:${it.color}"></span><span>${it.emoji?esc(it.emoji)+' ':''}${esc(it.name)}</span><span class="rv-val${ok?' met':''}">${g?`${c} de ${g}`:plural(c,'vez','veces')}</span></li>`;}).join('');
+  h+=`<h2>Hábitos y hogar</h2>`+(items.length?`<ul class="rv">${rows}</ul>${withGoal?`<p class="hint">${met} de ${withGoal} llegaron a su meta.</p>`:''}`:'<p class="list-empty">Sin hábitos ni tareas del hogar.</p>');
+
+  const doneW=state.tasks.filter(t=>t.done&&t.doneAt>=mon&&t.doneAt<=sun),lateW=state.tasks.filter(t=>!t.done&&t.date&&t.date<=sun);
+  h+=`<h2>Tareas</h2><p class="lede" style="margin-top:0">${doneW.length?`Completaste ${plural(doneW.length,'tarea')}: ${doneW.slice(0,6).map(t=>esc(t.text)).join(', ')}${doneW.length>6?' y más':''}`:'No completaste tareas puntuales'}${lateW.length?`. Quedan ${plural(lateW.length,'pendiente')} con fecha hasta el domingo.`:'.'}</p>`;
+
+  const ps=state.projects.filter(p=>p.status==='activo');
+  h+=`<h2>Proyectos</h2>`+(ps.length?ps.map(p=>{const w=p.weeks[wk]||{},nw=p.weeks[nwk]||{};
+    return `<div class="rv-proj" style="--c:${p.color}"><div class="proj-top"><span class="proj-name">${esc(p.name||'Sin nombre')}</span><span class="pill">${progressOf(p)}%</span></div>
+      <p class="hint">${fmtH(hoursIn(p,mon))} en la semana</p>
+      ${w.text?`<label class="checkline" style="margin-top:8px"><input type="checkbox" data-rpw="done" data-pid="${p.id}" data-wk="${wk}"${w.done?' checked':''}> ${esc(w.text)}</label>`:'<p class="hint">No tenía entregable definido.</p>'}
+      <label class="field" style="margin-top:10px"><span>Entregable de la semana siguiente</span><input data-rpw="text" data-pid="${p.id}" data-wk="${nwk}" value="${esc(nw.text||'')}" placeholder="Qué querés terminar"></label></div>`;}).join(''):'<p class="list-empty">No hay proyectos en curso.</p>');
+
+  const jw=state.journal.filter(j=>j.date>=mon&&j.date<=sun).length,pend=state.journal.filter(j=>j.status!=='aplicado').length;
+  h+=`<h2>Bitácora</h2><p class="lede" style="margin-top:0">${jw?`${plural(jw,'entrada')} esta semana. `:'Sin entradas esta semana. '}${pend?`${plural(pend,'ajuste')} sin aplicar.`:'No hay ajustes pendientes.'}</p>${pend?'<button class="btn small" data-act="go" data-v="bitacora" style="margin-top:8px">Ver la bitácora</button>':''}`;
+
+  h+=`<h2>Cierre</h2><div class="form">
+    <label class="field"><span>Qué salió bien</span><textarea data-rv="good" rows="2">${esc(r.good||'')}</textarea></label>
+    <label class="field"><span>Qué quiero cambiar la semana que viene</span><textarea data-rv="change" rows="2">${esc(r.change||'')}</textarea></label>
+    <button class="btn ${r.done?'on':'primary'}" data-act="rev-done">${r.done?'Revisión hecha ✓':'Marcar revisión como hecha'}</button></div>`;
   return h;
 }
 
@@ -398,16 +520,19 @@ function viewCalendario(){
   const T=todayStr(),first=parseYmd(calMonth),y=first.getFullYear(),m=first.getMonth();
   const last=ymd(new Date(y,m+1,0)),start=mondayOf(calMonth),end=addDays(mondayOf(last),6);
   const dl={};state.projects.forEach(p=>{if(p.deadline&&p.status!=='terminado')(dl[p.deadline]=dl[p.deadline]||[]).push(p);});
+  const td={};state.tasks.forEach(t=>{if(t.date&&!t.done)td[t.date]=true;});
   const cells=[];for(let d=start;d<=end;d=addDays(d,1))cells.push(d);
   const title=MONTHS[m].replace(/^./,c=>c.toUpperCase())+' '+y;
   const nav=`<div class="nav"><button class="icon-btn" data-act="cal" data-n="-1" aria-label="Mes anterior">‹</button>${calMonth!==T.slice(0,8)+'01'?'<button class="btn small" data-act="cal-today">Hoy</button>':''}<button class="icon-btn" data-act="cal" data-n="1" aria-label="Mes siguiente">›</button></div>`;
   let h=pageHead(title,'',nav);
   h+=`<div class="cal">${WD.map(w=>`<span class="cal-h">${w}</span>`).join('')}${cells.map(d=>{const its=dotsFor(d),inM=d.slice(0,7)===calMonth.slice(0,7);
-    return `<button class="cal-d${inM?'':' out'}${d===T?' today':''}${d===calSel?' sel':''}" data-act="cal-sel" data-date="${d}" aria-label="${fmtDay(d)}, ${plural(its.length,'registro')}${dl[d]?', vence un proyecto':''}"><span class="cal-n">${parseYmd(d).getDate()}</span><span class="mini">${its.slice(0,6).map(it=>`<i style="--c:${it.color}"></i>`).join('')}</span>${dl[d]?'<span class="cal-flag"></span>':''}</button>`;}).join('')}</div>
-  <p class="hint">Los puntos son registros del día. El rombo marca la fecha límite de un proyecto.</p>`;
+    return `<button class="cal-d${inM?'':' out'}${d===T?' today':''}${d===calSel?' sel':''}" data-act="cal-sel" data-date="${d}" aria-label="${fmtDay(d)}, ${plural(its.length,'registro')}${dl[d]?', vence un proyecto':''}"><span class="cal-n">${parseYmd(d).getDate()}</span><span class="mini">${its.slice(0,6).map(it=>`<i style="--c:${it.color}"></i>`).join('')}</span>${dl[d]?'<span class="cal-flag"></span>':''}${td[d]?'<span class="cal-task"></span>':''}</button>`;}).join('')}</div>
+  <p class="hint">Los puntos son registros del día, la rayita una tarea pendiente y el rombo la fecha límite de un proyecto.</p>`;
   const S=calSel,items=active();
   h+=`<h2>${weekdayName(S)} ${fmtDay(S)}</h2>`;
   if(dl[S])h+=`<p class="lede" style="margin-top:0">Fecha límite: ${dl[S].map(p=>esc(p.name||'Sin nombre')).join(', ')}.</p>`;
+  const tS=state.tasks.filter(t=>t.date===S);
+  if(tS.length)h+=`<div class="list" style="margin-bottom:10px">${tS.map(rowTask).join('')}</div>`;
   h+=items.length?`<div class="list">${items.map(it=>rowHtml({it,st:itemStatus(it,S)},S)).join('')}</div>`:'<p class="list-empty">Todavía no cargaste hábitos ni tareas.</p>';
   const hrs=state.projects.map(p=>[p,p.hours.filter(x=>x.date===S).reduce((a,x)=>a+x.h,0)]).filter(x=>x[1]);
   const js=state.journal.filter(j=>j.date===S).length;
@@ -569,7 +694,13 @@ document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
   const a=el.dataset.act,id=el.dataset.id,p=curProject();
   switch(a){
-    case 'go':go(el.dataset.v);break;
+    case 'go':if(el.dataset.v==='revision')revWeek=null;go(el.dataset.v);break;
+    case 'task-toggle':toggleTask(id);if(navigator.vibrate)navigator.vibrate(8);render();break;
+    case 'task-add':addTask();break;
+    case 'task-edit':openTaskDialog(id);break;
+    case 'task-clear':if(confirm('¿Borrar todas las tareas hechas?')){state.tasks=state.tasks.filter(t=>!t.done);save();render();}break;
+    case 'rev-week':revWeek=addDays(revWeek,7*el.dataset.n);render();scrollTo(0,0);break;
+    case 'rev-done':{const k=weekKey(revWeek),r=state.reviews[k]||(state.reviews[k]={});r.done=!r.done;r.doneAt=r.done?todayStr():'';save();render();break;}
     case 'cal':{const d=parseYmd(calMonth);d.setMonth(d.getMonth()+(+el.dataset.n));calMonth=ymd(d);render();break;}
     case 'cal-today':calMonth=todayStr().slice(0,8)+'01';calSel=todayStr();render();break;
     case 'cal-sel':calSel=el.dataset.date;if(calSel.slice(0,7)!==calMonth.slice(0,7))calMonth=calSel.slice(0,8)+'01';render();break;
@@ -607,7 +738,10 @@ document.addEventListener('click',e=>{
 });
 
 function onField(e){
-  const t=e.target,p=curProject();if(!p)return;
+  const t=e.target;
+  if(t.dataset.rv){const k=weekKey(revWeek),r=state.reviews[k]||(state.reviews[k]={});r[t.dataset.rv]=t.value;save();return;}
+  if(t.dataset.rpw){const pp=state.projects.find(x=>x.id===t.dataset.pid);if(!pp)return;const w=pp.weeks[t.dataset.wk]||(pp.weeks[t.dataset.wk]={text:'',done:false});if(t.dataset.rpw==='done')w.done=t.checked;else w.text=t.value;save();return;}
+  const p=curProject();if(!p)return;
   if(t.dataset.pf){const k=t.dataset.pf;p[k]=k==='progress'?+t.value:t.value;
     if(k==='progress'){$('#pOut').textContent=t.value+'%';$('#pBar').style.width=t.value+'%';}
     save();if(e.type==='change'&&k==='deadline')render();return;}
@@ -616,7 +750,7 @@ function onField(e){
 }
 document.addEventListener('input',onField);
 document.addEventListener('change',onField);
-document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id==='msNew'){e.preventDefault();addMilestone();}else if(e.target.id==='hNum'){e.preventDefault();addHours();}});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id==='msNew'){e.preventDefault();addMilestone();}else if(e.target.id==='tNew'){e.preventDefault();addTask();}else if(e.target.id==='hNum'){e.preventDefault();addHours();}});
 
 $('#importFile').addEventListener('change',async e=>{
   const file=e.target.files[0];e.target.value='';if(!file)return;
