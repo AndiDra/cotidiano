@@ -223,6 +223,17 @@ dialog h2{margin-top:0}
 .dlg-actions .left{margin-right:auto}
 [hidden]{display:none!important}
 .stepper{display:flex;align-items:center;gap:8px}
+.catchcard{margin-top:16px;border-color:var(--accent)}
+table.catchup{min-width:0}
+.catchup tr.grp th{text-align:left;padding:14px 14px 4px;font-size:.75rem;font-weight:600;color:var(--muted);background:var(--surface)}
+.catchup td{padding:6px 2px}
+.catchup .dot{width:30px;height:30px}
+.mstep{display:inline-flex;align-items:center;gap:2px}
+.mstep button{width:24px;height:28px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-size:1rem;line-height:1;padding:0;cursor:pointer}
+.mstep button:disabled{opacity:.3}
+.mstep b{min-width:16px;text-align:center;font-size:.875rem;font-variant-numeric:tabular-nums}
+.catchup small.plan{display:block;font-size:.6875rem;color:var(--muted)}
+.vin{width:56px;padding:6px 4px;text-align:center;font-size:16px}
 .tile.wide{grid-column:1/-1;min-height:auto!important;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:center}
 .tile.wide .tile-ic{grid-row:1/3;margin:0;width:46px;height:46px}
 .tile.wide .tile-t{margin:0}
@@ -341,7 +352,8 @@ const areaOptions=sel=>`<option value="">Sin área</option>${state.areas.map(a=>
 /* ========= Protocolo ========= */
 const proto=d=>state.protocol[d]||{};
 function setProto(d,k,v){const r=state.protocol[d]||(state.protocol[d]={});r[k]=v;save();}
-const blocksDone=d=>state.projects.reduce((a,p)=>a+p.hours.filter(x=>x.src==='foco'&&x.date===d).length,0);
+const blocksAuto=d=>state.projects.reduce((a,p)=>a+p.hours.filter(x=>x.src==='foco'&&x.date===d).length,0);
+const blocksDone=d=>blocksAuto(d)+(+proto(d).extra||0);
 const fmtMoney=v=>'$'+Number(v).toLocaleString('es-AR',{maximumFractionDigits:0});
 
 /* ========= A evitar ========= */
@@ -405,7 +417,7 @@ const progressOf=p=>p.milestones.length?Math.round(p.milestones.filter(m=>m.done
 const hoursIn=(p,mon)=>p.hours.filter(x=>mondayOf(x.date)===mon).reduce((a,x)=>a+x.h,0);
 
 /* ========= Navegación ========= */
-const VIEWS=['inicio','manual','habitos','hogar','tareas','proyectos','calendario','bitacora','revision','ajustes'];
+const VIEWS=['inicio','aldia','manual','habitos','hogar','tareas','proyectos','calendario','bitacora','revision','ajustes'];
 let revWeek=null,protoDay=null;
 let view='inicio', viewDate=todayStr(), weekStart=mondayOf(todayStr()), openProject=null, jFilter='todas', lastToday=todayStr();
 let calMonth=todayStr().slice(0,8)+'01', calSel=todayStr();
@@ -424,7 +436,7 @@ const ICONS={
 };
 
 function render(){
-  const views={inicio:viewInicio,manual:viewManual,habitos:()=>viewCategoria('habito'),hogar:()=>viewCategoria('hogar'),tareas:viewTareas,proyectos:viewProyectos,calendario:viewCalendario,bitacora:viewBitacora,revision:viewRevision,ajustes:viewAjustes};
+  const views={inicio:viewInicio,aldia:viewAlDia,manual:viewManual,habitos:()=>viewCategoria('habito'),hogar:()=>viewCategoria('hogar'),tareas:viewTareas,proyectos:viewProyectos,calendario:viewCalendario,bitacora:viewBitacora,revision:viewRevision,ajustes:viewAjustes};
   $('#view').innerHTML=views[view]();
   $('#topLeft').innerHTML=view==='inicio'?'<button class="brand" data-act="go" data-v="">Cotidiano</button>':view==='proyectos'&&openProject?backBtn('proyectos','Proyectos'):backBtn();
   paintSync();paintFocus();
@@ -545,6 +557,7 @@ function viewInicio(){
   const mon=mondayOf(T),days=[...Array(7)].map((_,i)=>addDays(mon,i));
   let h=`<header class="homehead"><h1>${weekdayName(T)}</h1><p class="sub">${fmtDay(T)}</p></header>
   <nav class="tiles" aria-label="Secciones">${tiles.map(([v,t,s,c])=>`<button class="tile${v==='manual'?' wide':''}" data-act="go" data-v="${v}" style="--c:${c}"><span class="tile-ic">${ICONS[v]}</span><span class="tile-t">${t}</span><span class="tile-s">${esc(s)}</span></button>`).join('')}</nav>`;
+  h+=`<button class="reviewcard catchcard" data-act="go" data-v="aldia"><span><b>Puesta al día</b><small>Cargá anteayer, ayer y hoy en una sola pantalla</small></span><span class="chev" aria-hidden="true">›</span></button>`;
   h+=todayBlock(T);
   h+=`<div class="sectionhead"><h2>Esta semana</h2><span class="sub" style="margin:0">${rangeText(days[0],days[6])}</span></div>
   <div class="strip">${days.map((d,i)=>{const its=dotsFor(d);return `<button class="sd${d===T?' today':''}" data-act="cal-day" data-date="${d}" aria-label="${WD[i]} ${parseYmd(d).getDate()}, ${plural(its.length,'registro')}"><small>${WD[i]}</small><b>${parseYmd(d).getDate()}</b><span class="mini">${its.slice(0,6).map(it=>`<i style="--c:${it.color}"></i>`).join('')}</span></button>`;}).join('')}</div>`;
@@ -555,6 +568,33 @@ function viewInicio(){
   h+=`<div class="sectionhead"><h2>Proyectos en curso</h2><button class="btn small ghost" data-act="go" data-v="proyectos">Ver todos</button></div>`;
   h+=actP.length?actP.map(projCard).join(''):`<div class="empty"><p>No hay proyectos en curso.</p><button class="btn primary" data-act="proj-new">Crear proyecto</button></div>`;
   return h;
+}
+
+/* ----- Puesta al día ----- */
+function viewAlDia(){
+  const T=todayStr(),days=[addDays(T,-2),addDays(T,-1),T],items=tracked(),av=active().filter(i=>i.cat==='evitar');
+  const head=`<tr><th></th>${days.map(d=>`<th class="${d===T?'today':''}"><span>${d===T?'hoy':d===addDays(T,-1)?'ayer':WD[(parseYmd(d).getDay()+6)%7]}</span><b>${parseYmd(d).getDate()}</b></th>`).join('')}</tr>`;
+  const grp=t=>`<tr class="grp"><th colspan="4">${t}</th></tr>`;
+  const tog=(k,d)=>{const on=!!proto(d)[k];return `<button class="dot${on?' on':''}" style="--c:#2C7A80" data-act="proto-toggle" data-k="${k}" data-date="${d}" aria-pressed="${on}" aria-label="${k==='start'?'Inicio sin diálogo':'Fricción cero'}, ${fmtDay(d)}"></button>`;};
+  const step=(act,d,n,extra,label)=>`<div class="mstep"><button data-act="${act}" ${extra} data-date="${d}" data-n="-1" aria-label="Restar, ${label}"${n?'':' disabled'}>−</button><b>${n}</b><button data-act="${act}" ${extra} data-date="${d}" data-n="1" aria-label="Sumar, ${label}">+</button></div>`;
+  let rows=grp('Protocolo')+
+    `<tr><th scope="row" class="iname">Sin diálogo</th>${days.map(d=>`<td class="${d===T?'today':''}">${tog('start',d)}</td>`).join('')}</tr>`+
+    `<tr><th scope="row" class="iname">Fricción cero</th>${days.map(d=>`<td class="${d===T?'today':''}">${tog('env',d)}</td>`).join('')}</tr>`+
+    `<tr><th scope="row" class="iname">Bloques</th>${days.map(d=>{const pl=proto(d).plan||0;return `<td class="${d===T?'today':''}"><div class="mstep"><button data-act="blk" data-date="${d}" data-n="-1" aria-label="Restar bloque, ${fmtDay(d)}"${+proto(d).extra?'':' disabled'}>−</button><b>${blocksDone(d)}</b><button data-act="blk" data-date="${d}" data-n="1" aria-label="Sumar bloque, ${fmtDay(d)}">+</button></div>${pl?`<small class="plan">de ${pl}</small>`:''}</td>`;}).join('')}</tr>`+
+    `<tr><th scope="row" class="iname">Volumen</th>${days.map(d=>`<td class="${d===T?'today':''}"><input class="vin" data-pvol="${d}" inputmode="decimal" value="${esc(proto(d).vol||'')}" aria-label="Volumen ${fmtDay(d)}"></td>`).join('')}</tr>`;
+  if(items.length)rows+=grp('Hábitos y hogar')+items.map(it=>`<tr><th scope="row" class="iname" title="${esc(it.name)}">${it.emoji?esc(it.emoji)+' ':''}${esc(it.name)}</th>${days.map(d=>{const on=isDone(it.id,d);return `<td class="${d===T?'today':''}"><button class="dot${on?' on':''}" style="--c:${it.color}" data-act="toggle" data-id="${it.id}" data-date="${d}" aria-pressed="${on}" aria-label="${esc(it.name)}, ${fmtDay(d)}"></button></td>`;}).join('')}</tr>`).join('');
+  if(av.length)rows+=grp('A evitar')+av.map(it=>`<tr><th scope="row" class="iname" title="${esc(it.name)}">${it.emoji?esc(it.emoji)+' ':''}${esc(it.name)}</th>${days.map(d=>`<td class="${d===T?'today':''}">${step('slip',d,slipCount(it.id,d),`data-id="${it.id}"`,`${esc(it.name)} ${fmtDay(d)}`)}</td>`).join('')}</tr>`).join('');
+  const lateT=state.tasks.filter(t=>!t.done&&t.date&&t.date<=T).length;
+  const unit=[...days].reverse().map(d=>proto(d).unit).find(Boolean);
+  return pageHead('Puesta al día','Los últimos tres días, en una sola pantalla')+
+    `<div class="grid-wrap"><table class="week catchup"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+    <p class="hint">El volumen se cuenta en ${unit?esc(unit):'la unidad que definas en el Manual'}. Los bloques suman los del cronómetro más los que agregues acá.</p>
+    <h2>Antes de cerrar</h2>
+    <div class="list">
+      <button class="row" data-act="go" data-v="bitacora" style="--c:#B7791F"><span class="swatch"></span><span class="row-main"><span class="row-name">¿Algo no salió como esperabas?</span><span class="row-hint">Anotalo en la bitácora: hecho, dato técnico, ajuste</span></span><span class="chev">›</span></button>
+      <button class="row" data-act="go" data-v="tareas" style="--c:#5FA8D3"><span class="swatch"></span><span class="row-main"><span class="row-name">Tareas</span><span class="row-hint">${lateT?`${plural(lateT,'tarea')} para hoy o vencidas`:'Nada vencido'}</span></span><span class="chev">›</span></button>
+      <button class="row" data-act="go" data-v="manual" style="--c:#2C7A80"><span class="swatch"></span><span class="row-main"><span class="row-name">Planificar bloques</span><span class="row-hint">En el Manual, con las flechas elegís el día</span></span><span class="chev">›</span></button>
+    </div>`;
 }
 
 /* ----- Manual ----- */
@@ -569,7 +609,7 @@ function viewManual(){
       <div class="stepper"><button class="icon-btn" data-act="proto-plan" data-n="-1" aria-label="Planificar uno menos"${plan?'':' disabled'}>−</button><b>${plan}</b><button class="icon-btn" data-act="proto-plan" data-n="1" aria-label="Planificar uno más">+</button></div></div>
     ${protoRows(D).replace(/<button class="row[^"]*" data-act="go" data-v="manual"[\s\S]*$/,'')}
   </div>
-  <p class="hint">Los bloques hechos se cuentan solos cuando terminás un foco en cualquier proyecto.</p>
+  <p class="hint">Los bloques se cuentan solos cuando terminás un foco en un proyecto. Si trabajaste sin cronómetro, sumalos en la Puesta al día.</p>
   <div class="field" style="margin-top:14px"><span style="font-size:.8125rem;font-weight:600;color:var(--muted)">Volumen del día (repeticiones en silencio)</span>
     <div class="inline" style="margin-top:4px"><input data-proto="vol" type="text" inputmode="decimal" value="${esc(pr.vol||'')}" placeholder="Cantidad" style="flex:0 1 110px"><input data-proto="unit" value="${esc(pr.unit||'')}" placeholder="Unidad, ej: scripts, bocetos, páginas"></div></div>
   <button class="btn ghost add" data-act="go" data-v="proyectos">Ir a proyectos para iniciar un foco</button>`;
@@ -930,6 +970,7 @@ document.addEventListener('click',e=>{
     case 'task-toggle':toggleTask(id);if(navigator.vibrate)navigator.vibrate(8);render();break;
     case 'task-add':addTask();break;
     case 'proto-toggle':{const d=el.dataset.date,k=el.dataset.k;setProto(d,k,!proto(d)[k]);if(navigator.vibrate)navigator.vibrate(8);render();break;}
+    case 'blk':{const d=el.dataset.date,ex=+proto(d).extra||0;setProto(d,'extra',Math.max(0,ex+(+el.dataset.n)));render();break;}
     case 'proto-plan':{const d=protoDay||todayStr();setProto(d,'plan',Math.max(0,(proto(d).plan||0)+(+el.dataset.n)));render();break;}
     case 'pday':protoDay=addDays(protoDay||todayStr(),+el.dataset.n);render();break;
     case 'pday-today':protoDay=todayStr();render();break;
@@ -987,6 +1028,7 @@ document.addEventListener('click',e=>{
 
 function onField(e){
   const t=e.target;
+  if(t.dataset.pvol){const d=t.dataset.pvol;setProto(d,'vol',t.value);if(!proto(d).unit){const u=Object.keys(state.protocol).sort().reverse().map(k=>state.protocol[k].unit).find(Boolean);if(u)state.protocol[d].unit=u;}return;}
   if(t.dataset.proto){setProto(protoDay||todayStr(),t.dataset.proto,t.value);return;}
   if(t.dataset.propStatus&&e.type==='change'){const x=state.proposals.find(q=>q.id===t.dataset.propStatus);if(x){x.status=t.value;save();render();}return;}
   if(t.dataset.rvc){const k=weekKey(revWeek),r=state.reviews[k]||(state.reviews[k]={});r[t.dataset.rvc]=t.checked;save();return;}
