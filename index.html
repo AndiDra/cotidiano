@@ -223,6 +223,23 @@ dialog h2{margin-top:0}
 .dlg-actions .left{margin-right:auto}
 [hidden]{display:none!important}
 .stepper{display:flex;align-items:center;gap:8px}
+.tile.wide{grid-column:1/-1;min-height:auto!important;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:center}
+.tile.wide .tile-ic{grid-row:1/3;margin:0;width:46px;height:46px}
+.tile.wide .tile-t{margin:0}
+.ring{display:grid;place-items:center;min-width:34px;height:34px;padding:0 4px;border-radius:999px;border:2.5px solid var(--c);font-size:.75rem;font-weight:700;font-variant-numeric:tabular-nums}
+.row.done .ring{background:var(--c);color:#fff}
+ul.rv li.kv{grid-template-columns:1fr auto}
+.proto-week td{font-size:.8125rem;font-variant-numeric:tabular-nums}
+.okc{color:var(--ok);font-weight:700}
+.pblock{margin-top:14px}
+.pblock-t{margin:0 0 8px}
+.pblock-t span{color:var(--muted);font-size:.875rem}
+.pcard{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:10px 8px 12px 14px;margin-bottom:8px}
+.pcard-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pcard p{margin:2px 6px 0 0}
+.pcard .signal{font-size:.8125rem;color:var(--muted);margin-top:6px}
+.prop-idea{font-weight:600;margin:8px 0 0;cursor:pointer}
+.entry.prop select{width:auto;padding:6px 10px;font-size:.875rem}
 .stepper b{min-width:20px;text-align:center;font-variant-numeric:tabular-nums;font-size:1.0625rem}
 .icon-btn:disabled{opacity:.35;cursor:default}
 ul.rv li.arow{grid-template-columns:1fr auto;row-gap:6px}
@@ -260,6 +277,23 @@ body.has-focus .wrap{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px)
 const KEY='cotidiano.data', SYNC_KEY='cotidiano.sync', META_KEY='cotidiano.syncmeta', THEME_KEY='cotidiano.theme';
 const PALETTE=['#E3A23B','#E58A8A','#8DB38B','#3E9C99','#7D8FD6','#A98BD1','#5FA8D3','#C9A35A'];
 const AREAS=['Hábitos','Hogar','Proyectos','Trabajo','Personal'];
+const BLOCKS={ejecucion:['Ejecución','Arrancar y sostener sin negociar'],correccion:['Corrección','Convertir cada error en un dato'],direccion:['Dirección','Dónde poner tu energía']};
+const DEFAULT_PRINCIPLES=[
+  {id:'p1',block:'ejecucion',title:'Iniciar por cronómetro',what:'Arrancás cuando llega la hora, no cuando tenés ganas. El estado de ánimo no se consulta.',signal:'Empezaste con menos de 10 segundos de duda.'},
+  {id:'p2',block:'ejecucion',title:'Cero diálogo',what:'No negociás con vos mismo antes de empezar: ni "cinco minutos más", ni "mejor mañana", ni "no estoy inspirado".',signal:'No hubo negociación antes del bloque.'},
+  {id:'p3',block:'ejecucion',title:'Fricción cero en el entorno',what:'Al terminar cada sesión dejás la mesa, los archivos y las herramientas listos para la próxima.',signal:'Al sentarte, todo estaba listo para arrancar.'},
+  {id:'p4',block:'ejecucion',title:'Una sola tarea atómica',what:'Elegís una tarea chica y concreta, y no la soltás hasta cerrarla. Nada de saltar entre cosas.',signal:'Cerraste al menos un bloque de foco en una sola cosa.'},
+  {id:'p5',block:'ejecucion',title:'Volumen programado',what:'Lo que planificaste se cumple, aunque salga imperfecto. Primero la cantidad, la calidad viene con las repeticiones.',signal:'Hiciste los bloques que planificaste.'},
+  {id:'p6',block:'ejecucion',title:'Matar al perfeccionista',what:'No esperás certeza absoluta para avanzar. Una versión imperfecta terminada vale más que una perfecta en la cabeza.',signal:'Entregaste o mostraste algo sin pulirlo de más.'},
+  {id:'p7',block:'correccion',title:'Repeticiones en silencio',what:'Sumás volumen sin anunciarlo ni buscar aprobación. Los resultados hablan después.',signal:'Registraste tu volumen del día.'},
+  {id:'p8',block:'correccion',title:'Extraer el dato y reintentar',what:'Ante un error o un rechazo: hecho objetivo, causa, ajuste. Y volvés a intentar de inmediato, sin dramatizar.',signal:'Hay una ficha en la bitácora con su ajuste.'},
+  {id:'p9',block:'direccion',title:'Tu aprendizaje es 100% tuyo',what:'Tu crecimiento no depende de lo que te enseñe o te dé el trabajo. Lo construís vos, por fuera.',signal:'Horas de foco en proyectos propios esta semana.'},
+  {id:'p10',block:'direccion',title:'Proponer en idioma de costos',what:'En el trabajo proponés solo lo que ahorra dinero o tiempo, y lo decís con números. Si no se puede cuantificar, va a tu proyecto propio.',signal:'Toda propuesta pasó por el decisor.'},
+  {id:'p11',block:'direccion',title:'Tu valor es lo que ejecutás',what:'Tu valor no lo define la aprobación de un superior, sino los proyectos que terminás y los problemas complejos que resolvés.',signal:'Cerraste entregables propios en la semana.'}];
+const FRICTION={proceso:'Proceso o sistema rígido',entorno:'Entorno conservador',comunicacion:'Comunicación o venta',tecnica:'Ejecución propia'};
+const FRICTION_HINT={proceso:'Lo que más se repitió es el proceso. Documentalo y evaluá con el decisor si vale la pena proponer un cambio.',entorno:'Lo que más se repitió es el entorno, y eso no depende de vos. Considerá llevar esa energía a tu activo propio.',comunicacion:'Lo que más se repitió es la comunicación. Ajustá el discurso: problema concreto y ahorro en números.',tecnica:'Lo que más se repitió es la ejecución propia. Es lo más corregible: un ajuste concreto y reintento.'};
+const SEVERITY={bajo:'Baja',medio:'Media',alto:'Alta'};
+const PROP_STATUS={pendiente:'Por presentar',presentada:'Presentada',aceptada:'Aceptada',rechazada:'Rechazada',sinrespuesta:'Sin respuesta',activo:'Llevada al activo propio'};
 const DEFAULT_AREAS=['Salud','Familia y pareja','Amistades','Trabajo','Emprendimientos','Finanzas','Hogar','Aprendizaje','Ocio y creatividad'];
 const MOMENTS={'':'Cualquier momento','mañana':'Mañana','tarde':'Tarde','noche':'Noche'};
 const STATUS={activo:'Activo',pausado:'En pausa',terminado:'Terminado'};
@@ -285,7 +319,7 @@ function rangeText(a,b){const A=parseYmd(a),B=parseYmd(b);return A.getMonth()===
 function deadlineText(d){const left=diffDays(d,todayStr());if(left<0)return `Venció hace ${plural(-left,'día')}`;if(left===0)return 'Vence hoy';return `Faltan ${plural(left,'día')}`;}
 
 /* ========= Estado ========= */
-function emptyState(){return{v:1,updatedAt:0,items:[],logs:{},projects:[],journal:[],tasks:[],reviews:{},slips:{},areas:[...DEFAULT_AREAS]};}
+function emptyState(){return{v:1,updatedAt:0,items:[],logs:{},projects:[],journal:[],tasks:[],reviews:{},slips:{},areas:[...DEFAULT_AREAS],protocol:{},proposals:[],principles:DEFAULT_PRINCIPLES.map(x=>({...x}))};}
 function seedState(){const s=emptyState();s.items=[
   {id:'i1',name:'Ir al gym',emoji:'🏋️',cat:'habito',area:'Salud',freq:'semana',n:3,moment:'',color:PALETTE[3],archived:false},
   {id:'i2',name:'Leer un rato',emoji:'📖',cat:'habito',area:'Aprendizaje',freq:'diario',n:1,moment:'noche',color:PALETTE[4],archived:false},
@@ -304,6 +338,12 @@ const active=()=>state.items.filter(i=>!i.archived);
 const tracked=()=>active().filter(i=>i.cat!=='evitar');
 const areaOptions=sel=>`<option value="">Sin área</option>${state.areas.map(a=>`<option${a===sel?' selected':''}>${esc(a)}</option>`).join('')}${sel&&!state.areas.includes(sel)?`<option selected>${esc(sel)}</option>`:''}`;
 
+/* ========= Protocolo ========= */
+const proto=d=>state.protocol[d]||{};
+function setProto(d,k,v){const r=state.protocol[d]||(state.protocol[d]={});r[k]=v;save();}
+const blocksDone=d=>state.projects.reduce((a,p)=>a+p.hours.filter(x=>x.src==='foco'&&x.date===d).length,0);
+const fmtMoney=v=>'$'+Number(v).toLocaleString('es-AR',{maximumFractionDigits:0});
+
 /* ========= A evitar ========= */
 const slipCount=(id,d)=>(state.slips[d]&&state.slips[d][id])||0;
 function addSlip(id,d,n){const day=state.slips[d]||(state.slips[d]={});const v=Math.max(0,(day[id]||0)+n);if(v)day[id]=v;else{delete day[id];if(!Object.keys(day).length)delete state.slips[d];}save();}
@@ -319,9 +359,9 @@ function startFocus(pid,min){focus={pid,start:Date.now(),dur:min*60000,paused:0,
 function pauseFocus(){if(!focus)return;if(focus.pausedAt){focus.paused+=Date.now()-focus.pausedAt;focus.pausedAt=null;}else focus.pausedAt=Date.now();saveFocus();render();}
 function finishFocus(auto){
   if(!focus)return;
-  const ms=Math.min(focusElapsed(),focus.dur),p=state.projects.find(x=>x.id===focus.pid),h=Math.round(ms/36000)/100,d=ymd(new Date(focus.start));
+  const ms=Math.min(focusElapsed(),focus.dur),p=state.projects.find(x=>x.id===focus.pid),h=Math.round(ms/36000)/100,d=ymd(new Date(focus.start)),min=Math.round(focus.dur/60000);
   focus=null;saveFocus();
-  if(p&&ms>=60000){p.hours.push({date:d,h,src:'foco'});save();toast(`${auto?'Terminó el bloque de foco. ':''}Se sumaron ${fmtH(h)} a ${p.name||'el proyecto'}.`);}
+  if(p&&ms>=60000){p.hours.push({date:d,h,src:'foco',min});save();toast(`${auto?'Terminó el bloque de foco. ':''}Se sumaron ${fmtH(h)} a ${p.name||'el proyecto'}.`);}
   else toast('El bloque duró menos de un minuto, así que no se guardó.');
   if(auto){if(navigator.vibrate)navigator.vibrate([200,100,200]);beep();}
   render();
@@ -365,14 +405,15 @@ const progressOf=p=>p.milestones.length?Math.round(p.milestones.filter(m=>m.done
 const hoursIn=(p,mon)=>p.hours.filter(x=>mondayOf(x.date)===mon).reduce((a,x)=>a+x.h,0);
 
 /* ========= Navegación ========= */
-const VIEWS=['inicio','habitos','hogar','tareas','proyectos','calendario','bitacora','revision','ajustes'];
-let revWeek=null;
+const VIEWS=['inicio','manual','habitos','hogar','tareas','proyectos','calendario','bitacora','revision','ajustes'];
+let revWeek=null,protoDay=null;
 let view='inicio', viewDate=todayStr(), weekStart=mondayOf(todayStr()), openProject=null, jFilter='todas', lastToday=todayStr();
 let calMonth=todayStr().slice(0,8)+'01', calSel=todayStr();
 function go(h){if(location.hash.slice(1)===h)route();else location.hash=h;}
 function route(){const [v,id]=decodeURIComponent(location.hash.slice(1)).split('/');view=VIEWS.includes(v)?v:'inicio';openProject=view==='proyectos'&&id?id:null;render();scrollTo(0,0);}
 
 const ICONS={
+  manual:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l2.6 6.9 6.9 2.6-6.9 2.6L12 21.5l-2.6-6.9L2.5 12l6.9-2.6z"/></svg>',
   tareas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5M3.5 18l1.5 1.5 2.5-2.5"/></svg>',
   habitos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V11"/><path d="M12 11C12 7 9 4 4 4c0 5 3 7 8 7z"/><path d="M12 13c0-3 2.5-6 8-6 0 4-3 6-8 6z"/></svg>',
   hogar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
@@ -383,7 +424,7 @@ const ICONS={
 };
 
 function render(){
-  const views={inicio:viewInicio,habitos:()=>viewCategoria('habito'),hogar:()=>viewCategoria('hogar'),tareas:viewTareas,proyectos:viewProyectos,calendario:viewCalendario,bitacora:viewBitacora,revision:viewRevision,ajustes:viewAjustes};
+  const views={inicio:viewInicio,manual:viewManual,habitos:()=>viewCategoria('habito'),hogar:()=>viewCategoria('hogar'),tareas:viewTareas,proyectos:viewProyectos,calendario:viewCalendario,bitacora:viewBitacora,revision:viewRevision,ajustes:viewAjustes};
   $('#view').innerHTML=views[view]();
   $('#topLeft').innerHTML=view==='inicio'?'<button class="brand" data-act="go" data-v="">Cotidiano</button>':view==='proyectos'&&openProject?backBtn('proyectos','Proyectos'):backBtn();
   paintSync();paintFocus();
@@ -464,14 +505,20 @@ function openTaskDialog(id){
 }
 
 /* ----- Pendientes de hoy (inicio) ----- */
+function protoRows(D){
+  const pr=proto(D),plan=pr.plan||0,bd=blocksDone(D);
+  const tog=(k,t,hint)=>`<div class="row${pr[k]?' done':''}" style="--c:#2C7A80"><button class="check" data-act="proto-toggle" data-k="${k}" data-date="${D}" aria-pressed="${!!pr[k]}" aria-label="${t}"></button><div class="row-main" data-act="proto-toggle" data-k="${k}" data-date="${D}"><span class="row-name">${t}</span><span class="row-hint">${hint}</span></div><span></span></div>`;
+  return tog('start','Inicio sin diálogo','Arrancaste sin negociar ni consultar el ánimo')+tog('env','Fricción cero','El entorno estaba listo desde la sesión anterior')+
+    (plan?`<button class="row${bd>=plan?' done':''}" data-act="go" data-v="manual" style="--c:#2C7A80"><span class="ring">${bd}/${plan}</span><span class="row-main"><span class="row-name">Bloques de foco</span><span class="row-hint">${bd>=plan?'Volumen cumplido':`${plural(plan-bd,'bloque')} por hacer`}</span></span><span></span></button>`:'');
+}
 function todayBlock(T){
   const ord={'mañana':0,'tarde':1,'noche':2,'':3};
   const items=tracked().map(it=>({it,st:itemStatus(it,T)})).filter(r=>r.st.due).sort((a,b)=>ord[a.it.moment]-ord[b.it.moment]);
   const tasks=state.tasks.filter(t=>t.date&&t.date<=T&&(!t.done||t.doneAt===T)).sort((a,b)=>a.date.localeCompare(b.date));
-  const pend=items.filter(r=>!r.st.done).length+tasks.filter(t=>!t.done).length;
-  const doneN=items.filter(r=>r.st.done).length+tasks.filter(t=>t.done).length;
-  if(!items.length&&!tasks.length)return `<div class="sectionhead"><h2>Hoy</h2></div><p class="lede" style="margin-top:0">Nada programado para hoy.</p>`;
-  const list=`<div class="list">${items.map(r=>rowHtml(r,T)).join('')}${tasks.map(rowTask).join('')}</div>`;
+  const pr=proto(T),plan=pr.plan||0,bd=blocksDone(T),blocksPend=plan&&bd<plan?1:0;
+  const pend=items.filter(r=>!r.st.done).length+tasks.filter(t=>!t.done).length+(pr.start?0:1)+(pr.env?0:1)+blocksPend;
+  const doneN=items.filter(r=>r.st.done).length+tasks.filter(t=>t.done).length+(pr.start?1:0)+(pr.env?1:0)+(plan&&!blocksPend?1:0);
+  const list=`<div class="list">${protoRows(T)}${items.map(r=>rowHtml(r,T)).join('')}${tasks.map(rowTask).join('')}</div>`;
   if(!pend)return `<div class="sectionhead"><h2>Hoy</h2></div><details class="alldone"><summary>Todo al día: ${plural(doneN,'cosa hecha','cosas hechas')}</summary>${list}</details>`;
   return `<div class="sectionhead"><h2>Pendientes de hoy</h2><span class="sub" style="margin:0">${doneN} de ${pend+doneN} hechas</span></div>${list}`;
 }
@@ -486,7 +533,9 @@ function viewInicio(){
   const openT=state.tasks.filter(t=>!t.done),lateT=openT.filter(t=>t.date&&t.date<T).length;
   const monthKey=T.slice(0,7),monthLogs=Object.keys(state.logs).filter(d=>d.startsWith(monthKey)).reduce((a,d)=>a+Object.keys(state.logs[d]).length,0);
   const lineFor=(s,pendTxt)=>!s.n?'Sin cargar todavía':s.pend?pendTxt(s.pend):`Al día${s.done?`, ${s.done} hechas hoy`:''}`;
+  const prT=proto(T),planT=prT.plan||0,bdT=blocksDone(T);
   const tiles=[
+    ['manual','Manual',planT?`Hoy: ${bdT} de ${planT} bloques de foco`:'Definí los bloques de hoy','#2C7A80'],
     ['habitos','Hábitos',lineFor(hab,n=>`${plural(n,'pendiente')} hoy`),'#3E9C99'],
     ['hogar','Tareas del hogar',lineFor(hog,n=>`${plural(n,'tarea')} para hoy`),'#E3A23B'],
     ['tareas','Tareas',openT.length?`${plural(openT.length,'pendiente')}${lateT?`, ${lateT} ${lateT===1?'vencida':'vencidas'}`:''}`:'Nada pendiente','#5FA8D3'],
@@ -495,7 +544,7 @@ function viewInicio(){
     ['bitacora','Bitácora',pendJ?`${plural(pendJ,'ajuste')} sin aplicar`:'Al día','#8DB38B']];
   const mon=mondayOf(T),days=[...Array(7)].map((_,i)=>addDays(mon,i));
   let h=`<header class="homehead"><h1>${weekdayName(T)}</h1><p class="sub">${fmtDay(T)}</p></header>
-  <nav class="tiles" aria-label="Secciones">${tiles.map(([v,t,s,c])=>`<button class="tile" data-act="go" data-v="${v}" style="--c:${c}"><span class="tile-ic">${ICONS[v]}</span><span class="tile-t">${t}</span><span class="tile-s">${esc(s)}</span></button>`).join('')}</nav>`;
+  <nav class="tiles" aria-label="Secciones">${tiles.map(([v,t,s,c])=>`<button class="tile${v==='manual'?' wide':''}" data-act="go" data-v="${v}" style="--c:${c}"><span class="tile-ic">${ICONS[v]}</span><span class="tile-t">${t}</span><span class="tile-s">${esc(s)}</span></button>`).join('')}</nav>`;
   h+=todayBlock(T);
   h+=`<div class="sectionhead"><h2>Esta semana</h2><span class="sub" style="margin:0">${rangeText(days[0],days[6])}</span></div>
   <div class="strip">${days.map((d,i)=>{const its=dotsFor(d);return `<button class="sd${d===T?' today':''}" data-act="cal-day" data-date="${d}" aria-label="${WD[i]} ${parseYmd(d).getDate()}, ${plural(its.length,'registro')}"><small>${WD[i]}</small><b>${parseYmd(d).getDate()}</b><span class="mini">${its.slice(0,6).map(it=>`<i style="--c:${it.color}"></i>`).join('')}</span></button>`;}).join('')}</div>`;
@@ -508,6 +557,84 @@ function viewInicio(){
   return h;
 }
 
+/* ----- Manual ----- */
+function viewManual(){
+  const T=todayStr();if(!protoDay)protoDay=T;
+  const D=protoDay,pr=proto(D),plan=pr.plan||0,bd=blocksDone(D),mon=mondayOf(D),days=[...Array(7)].map((_,i)=>addDays(mon,i));
+  let h=pageHead('Manual','Reglas para ejecutar sin negociar');
+  const dayLabel=D===T?'Protocolo de hoy':`Protocolo del ${weekdayName(D).toLowerCase()} ${parseYmd(D).getDate()}`;
+  h+=`<div class="sectionhead"><h2>${dayLabel}</h2><div class="nav"><button class="icon-btn" data-act="pday" data-n="-1" aria-label="Día anterior">‹</button>${D!==T?'<button class="btn small" data-act="pday-today">Hoy</button>':''}<button class="icon-btn" data-act="pday" data-n="1" aria-label="Día siguiente">›</button></div></div>
+  <div class="list">
+    <div class="row" style="--c:#2C7A80"><span class="ring">${bd}/${plan||'–'}</span><div class="row-main"><span class="row-name">Bloques de foco</span><span class="row-hint">${plan?(bd>=plan?'Volumen cumplido':`${plural(plan-bd,'bloque')} por hacer`):'Definí cuántos vas a hacer'}</span></div>
+      <div class="stepper"><button class="icon-btn" data-act="proto-plan" data-n="-1" aria-label="Planificar uno menos"${plan?'':' disabled'}>−</button><b>${plan}</b><button class="icon-btn" data-act="proto-plan" data-n="1" aria-label="Planificar uno más">+</button></div></div>
+    ${protoRows(D).replace(/<button class="row[^"]*" data-act="go" data-v="manual"[\s\S]*$/,'')}
+  </div>
+  <p class="hint">Los bloques hechos se cuentan solos cuando terminás un foco en cualquier proyecto.</p>
+  <div class="field" style="margin-top:14px"><span style="font-size:.8125rem;font-weight:600;color:var(--muted)">Volumen del día (repeticiones en silencio)</span>
+    <div class="inline" style="margin-top:4px"><input data-proto="vol" type="text" inputmode="decimal" value="${esc(pr.vol||'')}" placeholder="Cantidad" style="flex:0 1 110px"><input data-proto="unit" value="${esc(pr.unit||'')}" placeholder="Unidad, ej: scripts, bocetos, páginas"></div></div>
+  <button class="btn ghost add" data-act="go" data-v="proyectos">Ir a proyectos para iniciar un foco</button>`;
+
+  const cell=v=>`<td>${v}</td>`;
+  const rowsW=[
+    ['Bloques',d=>{const p=proto(d).plan||0,b=blocksDone(d);return p?`<span class="${b>=p?'okc':''}">${b}/${p}</span>`:(b||'');}],
+    ['Sin diálogo',d=>proto(d).start?'<span class="okc">✓</span>':''],
+    ['Fricción cero',d=>proto(d).env?'<span class="okc">✓</span>':''],
+    ['Volumen',d=>esc(proto(d).vol||'')]];
+  h+=`<div class="sectionhead"><h2>Semana del ${rangeText(days[0],days[6])}</h2></div>
+  <div class="grid-wrap"><table class="week proto-week"><thead><tr><th></th>${days.map((d,i)=>`<th class="${d===T?'today':''}"><span>${WD[i]}</span><b>${parseYmd(d).getDate()}</b></th>`).join('')}</tr></thead>
+  <tbody>${rowsW.map(([t,f])=>`<tr><th scope="row" class="iname">${t}</th>${days.map(d=>`<td class="${d===T?'today':''}">${f(d)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+
+  h+=`<div class="sectionhead"><h2>Principios</h2><button class="btn small ghost" data-act="pr-new">+ Agregar</button></div>`;
+  h+=Object.entries(BLOCKS).map(([k,[name,desc]])=>{const ps=state.principles.filter(x=>x.block===k);if(!ps.length)return'';
+    return `<div class="pblock"><p class="pblock-t"><b>${name}</b> <span>${desc}</span></p>${ps.map(x=>`<div class="pcard"><div class="pcard-top"><b>${esc(x.title)}</b><button class="icon-btn subtle" data-act="pr-edit" data-id="${x.id}" aria-label="Editar ${esc(x.title)}">✎</button></div><p>${esc(x.what)}</p>${x.signal?`<p class="signal">Señal de cumplimiento: ${esc(x.signal)}</p>`:''}</div>`).join('')}</div>`;}).join('');
+
+  const P=state.proposals,presented=P.filter(x=>['presentada','aceptada','rechazada','sinrespuesta'].includes(x.status)),acc=P.filter(x=>x.status==='aceptada');
+  const q=x=>(+x.money>0)||(+x.hours>0),qp=presented.filter(q),qa=acc.filter(q),np=presented.filter(x=>!q(x)),na=acc.filter(x=>!q(x));
+  h+=`<div class="sectionhead"><h2>Decisor de propuestas</h2><button class="btn small ghost" data-act="prop-new">+ Evaluar idea</button></div>`;
+  if(!P.length)h+=`<p class="hint" style="margin-top:0">Antes de proponer algo en el trabajo, cargalo acá. Si ahorra dinero o tiempo medible, te dice cómo presentarlo; si no, va a tu proyecto propio. Con el tiempo vas a ver con datos si conviene seguir proponiendo.</p>`;
+  else{
+    h+=`<p class="lede" style="margin-top:0">${presented.length?`Presentaste ${presented.length}, aceptadas ${acc.length}.`:'Todavía no presentaste ninguna.'}${qp.length&&np.length?` Con ahorro cuantificado: ${qa.length} de ${qp.length}. Sin cuantificar: ${na.length} de ${np.length}.`:''}</p>`;
+    h+=[...P].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<article class="entry prop"><header><span class="area">${PROP_STATUS[x.status]}</span><time>${fmtDay(x.date)}</time></header>
+      <p class="prop-idea" data-act="prop-edit" data-id="${x.id}">${esc(x.idea)}</p>
+      <p class="hint" style="margin:2px 0 8px">${q(x)?`Presentala en idioma de ahorro: ${[+x.money>0?fmtMoney(x.money)+' por mes':'',+x.hours>0?String(x.hours).replace('.',',')+' h por mes':''].filter(Boolean).join(' y ')}.`:'No se puede cuantificar: llevala a tu activo propio.'}${x.to?` Para: ${esc(x.to)}.`:''}</p>
+      <select data-prop-status="${x.id}" aria-label="Estado">${Object.entries(PROP_STATUS).map(([k,v])=>`<option value="${k}"${x.status===k?' selected':''}>${v}</option>`).join('')}</select></article>`).join('');
+  }
+  h+=`<div class="sectionhead"><h2>Extracción técnica</h2></div><p class="hint" style="margin-top:0">Ante un error, un rechazo o un bloqueo: hecho objetivo, dato técnico, ajuste y reintento.</p><button class="btn" data-act="go" data-v="bitacora" style="margin-top:10px">Abrir la bitácora</button>`;
+  return h;
+}
+function openPrincipleDialog(id){
+  const x=id?state.principles.find(p=>p.id===id):{block:'ejecucion',title:'',what:'',signal:''};
+  openDialog(`<div class="form"><h2>${id?'Editar principio':'Nuevo principio'}</h2>
+    <label class="field"><span>Bloque</span><select id="prBlock">${Object.entries(BLOCKS).map(([k,[n]])=>`<option value="${k}"${x.block===k?' selected':''}>${n}</option>`).join('')}</select></label>
+    <label class="field"><span>Principio</span><input id="prTitle" value="${esc(x.title)}"></label>
+    <label class="field"><span>Qué significa en concreto</span><textarea id="prWhat" rows="3">${esc(x.what)}</textarea></label>
+    <label class="field"><span>Señal de cumplimiento</span><input id="prSignal" value="${esc(x.signal)}"></label>
+    <div class="dlg-actions">${id?'<button type="button" class="btn ghost left danger-btn" id="prDel">Eliminar</button>':''}<button type="button" class="btn" data-close>Cancelar</button><button type="button" class="btn primary" id="prSave">Guardar</button></div></div>`,b=>{
+    b.querySelector('#prSave').onclick=()=>{const t=b.querySelector('#prTitle').value.trim();if(!t)return;
+      const d={block:b.querySelector('#prBlock').value,title:t,what:b.querySelector('#prWhat').value.trim(),signal:b.querySelector('#prSignal').value.trim()};
+      if(id)Object.assign(x,d);else state.principles.push({id:uid(),...d});save();closeDialog();render();};
+    const del=b.querySelector('#prDel');if(del)del.onclick=()=>{if(confirm('¿Eliminar este principio?')){state.principles=state.principles.filter(p=>p.id!==id);save();closeDialog();render();}};
+  });
+}
+function openProposalDialog(id){
+  const x=id?state.proposals.find(p=>p.id===id):{idea:'',problem:'',money:'',hours:'',to:''};
+  openDialog(`<div class="form"><h2>${id?'Editar propuesta':'Evaluar una idea'}</h2>
+    <label class="field"><span>Idea</span><input id="ppIdea" value="${esc(x.idea)}" placeholder="Ej: automatizar el listado de documentos"></label>
+    <label class="field"><span>Qué problema o costo resuelve</span><textarea id="ppProblem" rows="2" placeholder="Ej: hoy se arma a mano todos los lunes">${esc(x.problem)}</textarea></label>
+    <div class="grid2"><label class="field"><span>Ahorro en pesos por mes</span><input id="ppMoney" inputmode="decimal" value="${esc(x.money)}" placeholder="0"></label><label class="field"><span>Ahorro en horas por mes</span><input id="ppHours" inputmode="decimal" value="${esc(x.hours)}" placeholder="0"></label></div>
+    <label class="field"><span>A quién se la proponés</span><input id="ppTo" value="${esc(x.to)}"></label>
+    <div class="dlg-actions">${id?'<button type="button" class="btn ghost left danger-btn" id="ppDel">Eliminar</button>':''}<button type="button" class="btn" data-close>Cancelar</button><button type="button" class="btn primary" id="ppSave">${id?'Guardar':'Evaluar'}</button></div></div>`,b=>{
+    const num=sel=>{const v=parseFloat(String(b.querySelector(sel).value).replace(/\./g,'').replace(',','.'));return v>0?v:'';};
+    b.querySelector('#ppSave').onclick=()=>{const idea=b.querySelector('#ppIdea').value.trim();if(!idea){b.querySelector('#ppIdea').focus();return;}
+      const d={idea,problem:b.querySelector('#ppProblem').value.trim(),money:num('#ppMoney'),hours:num('#ppHours'),to:b.querySelector('#ppTo').value.trim()};
+      const quant=d.money>0||d.hours>0;
+      if(id)Object.assign(x,d);else state.proposals.push({id:uid(),date:todayStr(),status:quant?'pendiente':'activo',...d});
+      save();closeDialog();render();
+      if(!id)toast(quant?'Tiene ahorro medible: presentala hablando de ese ahorro.':'No tiene ahorro medible: queda como idea para tu activo propio.');};
+    const del=b.querySelector('#ppDel');if(del)del.onclick=()=>{if(confirm('¿Eliminar esta propuesta?')){state.proposals=state.proposals.filter(p=>p.id!==id);save();closeDialog();render();}};
+  });
+}
+
 /* ----- Revisión semanal ----- */
 function viewRevision(){
   const T=todayStr();
@@ -517,6 +644,9 @@ function viewRevision(){
   const nav=`<div class="nav"><button class="icon-btn" data-act="rev-week" data-n="-1" aria-label="Semana anterior">‹</button><button class="icon-btn" data-act="rev-week" data-n="1" aria-label="Semana siguiente">›</button></div>`;
   let h=pageHead('Revisión semanal',`Semana del ${rangeText(mon,sun)}`,nav);
 
+  {const ps=days.map(proto),sd=ps.filter(x=>x.start).length,ed=ps.filter(x=>x.env).length,planW=ps.reduce((a,x)=>a+(x.plan||0),0),bdW=days.reduce((a,d)=>a+blocksDone(d),0),vols={};
+   ps.forEach(x=>{const v=parseFloat(String(x.vol||'').replace(',','.'));if(v>0){const u=(x.unit||'unidades').trim().toLowerCase();vols[u]=(vols[u]||0)+v;}});
+   h+=`<h2>Protocolo</h2><ul class="rv"><li class="kv"><span>Bloques de foco</span><span class="rv-val${planW&&bdW>=planW?' met':''}">${planW?`${bdW} de ${planW}`:bdW}</span></li><li class="kv"><span>Inicio sin diálogo</span><span class="rv-val">${sd} de 7 días</span></li><li class="kv"><span>Fricción cero</span><span class="rv-val">${ed} de 7 días</span></li><li class="kv"><span>Volumen</span><span class="rv-val">${Object.entries(vols).map(([u,v])=>`${String(+v.toFixed(2)).replace('.',',')} ${esc(u)}`).join(', ')||'Sin registrar'}</span></li></ul>`;}
   const items=tracked();
   const goal=it=>it.freq==='diario'?7:it.freq==='semana'?it.n:it.freq==='cada'&&it.n<=7?Math.floor(7/it.n):0;
   let withGoal=0,met=0;
@@ -534,6 +664,9 @@ function viewRevision(){
   const av=active().filter(i=>i.cat==='evitar');
   if(av.length)h+=`<h2>A evitar</h2><ul class="rv">${av.map(it=>{const w=slipsWeek(it.id,mon),pw=slipsWeek(it.id,addDays(mon,-7));return `<li><span class="sw-dot" style="--c:${it.color}"></span><span>${it.emoji?esc(it.emoji)+' ':''}${esc(it.name)}</span><span class="rv-val">${plural(w,'vez','veces')} (la anterior ${pw})</span></li>`;}).join('')}</ul>`;
 
+  {const jW=state.journal.filter(j=>j.date>=mon&&j.date<=sun&&j.cat&&FRICTION[j.cat]);
+   if(jW.length){const cnt={};jW.forEach(j=>{cnt[j.cat]=(cnt[j.cat]||0)+1;});const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+     h+=`<h2>Fricciones</h2><p class="lede" style="margin-top:0">${top.map(([k,n])=>`${FRICTION[k]}: ${n}`).join(', ')}.</p><p class="hint">${FRICTION_HINT[top[0][0]]}</p>`;}}
   const doneW=state.tasks.filter(t=>t.done&&t.doneAt>=mon&&t.doneAt<=sun),lateW=state.tasks.filter(t=>!t.done&&t.date&&t.date<=sun);
   h+=`<h2>Tareas</h2><p class="lede" style="margin-top:0">${doneW.length?`Completaste ${plural(doneW.length,'tarea')}: ${doneW.slice(0,6).map(t=>esc(t.text)).join(', ')}${doneW.length>6?' y más':''}`:'No completaste tareas puntuales'}${lateW.length?`. Quedan ${plural(lateW.length,'pendiente')} con fecha hasta el domingo.`:'.'}</p>`;
 
@@ -544,6 +677,8 @@ function viewRevision(){
       ${w.text?`<label class="checkline" style="margin-top:8px"><input type="checkbox" data-rpw="done" data-pid="${p.id}" data-wk="${wk}"${w.done?' checked':''}> ${esc(w.text)}</label>`:'<p class="hint">No tenía entregable definido.</p>'}
       <label class="field" style="margin-top:10px"><span>Entregable de la semana siguiente</span><input data-rpw="text" data-pid="${p.id}" data-wk="${nwk}" value="${esc(nw.text||'')}" placeholder="Qué querés terminar"></label></div>`;}).join(''):'<p class="list-empty">No hay proyectos en curso.</p>');
 
+  {const ownH=state.projects.filter(p=>p.area!=='Trabajo').reduce((a,p)=>a+hoursIn(p,mon),0);
+   h+=`<h2>Activo propio</h2><p class="hint" style="margin-top:0">${fmtH(ownH)} de foco en proyectos propios.</p><div class="form" style="margin-top:8px"><label class="checkline"><input type="checkbox" data-rvc="invest"${r.invest?' checked':''}> Inversión de tiempo innegociable cumplida</label><label class="checkline"><input type="checkbox" data-rvc="hito"${r.hito?' checked':''}> Hito resuelto sin buscar validación externa</label></div>`;}
   const jw=state.journal.filter(j=>j.date>=mon&&j.date<=sun).length,pend=state.journal.filter(j=>j.status!=='aplicado').length;
   h+=`<h2>Bitácora</h2><p class="lede" style="margin-top:0">${jw?`${plural(jw,'entrada')} esta semana. `:'Sin entradas esta semana. '}${pend?`${plural(pend,'ajuste')} sin aplicar.`:'No hay ajustes pendientes.'}</p>${pend?'<button class="btn small" data-act="go" data-v="bitacora" style="margin-top:8px">Ver la bitácora</button>':''}`;
 
@@ -678,18 +813,19 @@ function viewBitacora(){
   <details class="compose"${list.length?'':' open'}><summary>Nueva entrada</summary>
   <div class="form" style="margin-top:8px">
     <div class="grid2"><label class="field"><span>Área</span><select id="jArea">${AREAS.map(a=>`<option>${a}</option>`).join('')}</select></label><label class="field"><span>Fecha</span><input type="date" id="jDate" value="${T}"></label></div>
-    <label class="field"><span>Qué pasó</span><textarea id="jWhat" rows="2" placeholder="Los hechos, sin juzgarte. Ej: no fui al gym el martes ni el jueves."></textarea></label>
-    <label class="field"><span>Por qué creo que pasó</span><textarea id="jWhy" rows="2" placeholder="Ej: no dejé el bolso preparado y salí tarde del trabajo."></textarea></label>
-    <label class="field"><span>Qué voy a ajustar</span><textarea id="jFix" rows="2" placeholder="Ej: preparar el bolso la noche anterior."></textarea></label>
+    <div class="grid2"><label class="field"><span>Tipo de fricción</span><select id="jCat"><option value="">Sin especificar</option>${Object.entries(FRICTION).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label><label class="field"><span>Severidad</span><select id="jSev"><option value="">Sin especificar</option>${Object.entries(SEVERITY).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label></div>
+    <label class="field"><span>Hecho objetivo</span><textarea id="jWhat" rows="2" placeholder="Los hechos, sin juzgarte. Ej: no fui al gym el martes ni el jueves."></textarea></label>
+    <label class="field"><span>Dato técnico: por qué pasó</span><textarea id="jWhy" rows="2" placeholder="Ej: no dejé el bolso preparado y salí tarde del trabajo."></textarea></label>
+    <label class="field"><span>Ajuste y reintento</span><textarea id="jFix" rows="2" placeholder="Ej: preparar el bolso la noche anterior."></textarea></label>
     <button class="btn primary" data-act="j-save">Guardar entrada</button>
   </div></details>`;
   if(!list.length)return h;
   const pend=state.journal.filter(j=>j.status!=='aplicado').length;
   const byArea=AREAS.map(a=>[a,state.journal.filter(j=>j.area===a&&diffDays(T,j.date)<=30).length]).filter(x=>x[1]);
-  h+=`<p class="lede">${pend?`${plural(pend,'ajuste')} sin aplicar todavía.`:'Todos los ajustes están aplicados.'}${byArea.length?` En los últimos 30 días: ${byArea.map(([a,n])=>`${a.toLowerCase()} ${n}`).join(', ')}.`:''}</p>`;
+  h+=`<p class="lede">${pend?`${plural(pend,'ajuste')} sin aplicar todavía.`:'Todos los ajustes están aplicados.'}${byArea.length?` En los últimos 30 días: ${byArea.map(([a,n])=>`${a.toLowerCase()} ${n}`).join(', ')}.`:''}${(()=>{const c={};state.journal.forEach(j=>{if(j.cat&&FRICTION[j.cat]&&diffDays(T,j.date)<=30)c[j.cat]=(c[j.cat]||0)+1;});const e=Object.entries(c).sort((a,b)=>b[1]-a[1]);return e.length?` Fricciones: ${e.map(([k,n])=>`${FRICTION[k].toLowerCase()} ${n}`).join(', ')}.`:'';})()}</p>`;
   h+=`<div class="chips">${['todas','pendientes',...AREAS].map(c=>`<button class="chip" data-act="j-filter" data-f="${c}" aria-pressed="${jFilter===c}">${c==='todas'?'Todas':c==='pendientes'?'Sin aplicar':c}</button>`).join('')}</div>`;
-  h+=filtered.map(j=>`<article class="entry${j.status==='aplicado'?' ok':''}"><header><span class="area">${esc(j.area)}</span><time>${fmtDay(j.date)}</time></header>
-    <dl><dt>Qué pasó</dt><dd>${esc(j.what)}</dd>${j.why?`<dt>Por qué</dt><dd>${esc(j.why)}</dd>`:''}${j.fix?`<dt>Ajuste</dt><dd class="fix">${esc(j.fix)}</dd>`:''}</dl>
+  h+=filtered.map(j=>`<article class="entry${j.status==='aplicado'?' ok':''}"><header><span class="area">${esc(j.area)}${j.cat&&FRICTION[j.cat]?`, ${FRICTION[j.cat].toLowerCase()}`:''}${j.sev?`, severidad ${SEVERITY[j.sev].toLowerCase()}`:''}</span><time>${fmtDay(j.date)}</time></header>
+    <dl><dt>Hecho</dt><dd>${esc(j.what)}</dd>${j.why?`<dt>Dato técnico</dt><dd>${esc(j.why)}</dd>`:''}${j.fix?`<dt>Ajuste y reintento</dt><dd class="fix">${esc(j.fix)}</dd>`:''}</dl>
     <footer><button class="btn small${j.status==='aplicado'?' on':''}" data-act="j-status" data-id="${j.id}">${j.status==='aplicado'?'Ajuste aplicado ✓':'Marcar ajuste como aplicado'}</button><button class="btn small ghost" data-act="j-del" data-id="${j.id}">Eliminar</button></footer></article>`).join('')||'<p class="list-empty">No hay entradas con ese filtro.</p>';
   return h;
 }
@@ -781,7 +917,7 @@ function addArea(){const inp=$('#areaNew'),v=inp.value.trim();if(!v){inp.focus()
 function addMilestone(){const p=curProject(),inp=$('#msNew');const v=inp.value.trim();if(!p||!v)return;p.milestones.push({id:uid(),text:v,done:false});save();render();$('#msNew').focus();}
 function addHours(){const p=curProject();const h=parseFloat(String($('#hNum').value).replace(',','.'));if(!(h>0)){$('#hNum').focus();return;}p.hours.push({date:$('#hDate').value||todayStr(),h});save();render();}
 function saveJournal(){const what=$('#jWhat').value.trim();if(!what){$('#jWhat').focus();return;}
-  state.journal.push({id:uid(),date:$('#jDate').value||todayStr(),area:$('#jArea').value,what,why:$('#jWhy').value.trim(),fix:$('#jFix').value.trim(),status:'pendiente'});save();render();}
+  state.journal.push({id:uid(),date:$('#jDate').value||todayStr(),area:$('#jArea').value,cat:$('#jCat').value,sev:$('#jSev').value,what,why:$('#jWhy').value.trim(),fix:$('#jFix').value.trim(),status:'pendiente'});save();render();}
 function applyTheme(t){if(t==='auto')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`cotidiano-${todayStr()}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 
@@ -790,9 +926,17 @@ document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
   const a=el.dataset.act,id=el.dataset.id,p=curProject();
   switch(a){
-    case 'go':if(el.dataset.v==='revision')revWeek=null;go(el.dataset.v);break;
+    case 'go':if(el.dataset.v==='revision')revWeek=null;if(el.dataset.v==='manual')protoDay=null;go(el.dataset.v);break;
     case 'task-toggle':toggleTask(id);if(navigator.vibrate)navigator.vibrate(8);render();break;
     case 'task-add':addTask();break;
+    case 'proto-toggle':{const d=el.dataset.date,k=el.dataset.k;setProto(d,k,!proto(d)[k]);if(navigator.vibrate)navigator.vibrate(8);render();break;}
+    case 'proto-plan':{const d=protoDay||todayStr();setProto(d,'plan',Math.max(0,(proto(d).plan||0)+(+el.dataset.n)));render();break;}
+    case 'pday':protoDay=addDays(protoDay||todayStr(),+el.dataset.n);render();break;
+    case 'pday-today':protoDay=todayStr();render();break;
+    case 'pr-new':openPrincipleDialog();break;
+    case 'pr-edit':openPrincipleDialog(id);break;
+    case 'prop-new':openProposalDialog();break;
+    case 'prop-edit':openProposalDialog(id);break;
     case 'slip':addSlip(id,el.dataset.date,+el.dataset.n);if(navigator.vibrate)navigator.vibrate(8);render();break;
     case 'focus-start':startFocus(openProject,+el.dataset.min);break;
     case 'focus-pause':pauseFocus();break;
@@ -843,6 +987,9 @@ document.addEventListener('click',e=>{
 
 function onField(e){
   const t=e.target;
+  if(t.dataset.proto){setProto(protoDay||todayStr(),t.dataset.proto,t.value);return;}
+  if(t.dataset.propStatus&&e.type==='change'){const x=state.proposals.find(q=>q.id===t.dataset.propStatus);if(x){x.status=t.value;save();render();}return;}
+  if(t.dataset.rvc){const k=weekKey(revWeek),r=state.reviews[k]||(state.reviews[k]={});r[t.dataset.rvc]=t.checked;save();return;}
   if(t.dataset.rv){const k=weekKey(revWeek),r=state.reviews[k]||(state.reviews[k]={});r[t.dataset.rv]=t.value;save();return;}
   if(t.dataset.rpw){const pp=state.projects.find(x=>x.id===t.dataset.pid);if(!pp)return;const w=pp.weeks[t.dataset.wk]||(pp.weeks[t.dataset.wk]={text:'',done:false});if(t.dataset.rpw==='done')w.done=t.checked;else w.text=t.value;save();return;}
   const p=curProject();if(!p)return;
